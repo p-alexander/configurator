@@ -6,18 +6,23 @@ import (
 	"github.com/p-alexander/configurator"
 )
 
-// config is private config example.
+// config is a private config example.
 type config struct {
 	i int
 	a string
 }
 
-// Foo is an exported structure.
+// Foo is an exported structure with a simple config.
 type Foo struct {
 	config *config
 }
 
-// WithI is used to configure Foo through NewFoo constructor.
+// Bar is an exported structure with a thread-safe config storage.
+type Bar struct {
+	*configurator.Storage[*config]
+}
+
+// WithI is used to modify a config, integer setter.
 func WithI(i int) configurator.Option[*config] {
 	return func(c *config) error {
 		c.i = i
@@ -26,7 +31,7 @@ func WithI(i int) configurator.Option[*config] {
 	}
 }
 
-// WithA is used to configure Foo through NewFoo constructor.
+// WithA is used to modify a config, string setter.
 func WithA(a string) configurator.Option[*config] {
 	return func(c *config) error {
 		c.a = a
@@ -35,18 +40,39 @@ func WithA(a string) configurator.Option[*config] {
 	}
 }
 
-// NewFoo is a constructor for Foo
+// GetI returns an integer value from a config.
+func GetI() configurator.Getter[*config, int] {
+	return func(c *config) (value int, err error) {
+		return c.i, nil
+	}
+}
+
+// GetA returns a string value from a config.
+func GetA() configurator.Getter[*config, string] {
+	return func(c *config) (value string, err error) {
+		return c.a, nil
+	}
+}
+
+// NewFoo is a variadic constructor for Foo.
 func NewFoo(opts ...configurator.Option[*config]) (*Foo, error) {
 	c := new(config)
 
 	// call Constructor to execute all options on given config.
-	if err := configurator.Constructor[*config](c, opts); err != nil {
-		return nil, fmt.Errorf("ConfigConstructor: %w", err)
+	if err := configurator.Constructor(c, opts); err != nil {
+		return nil, fmt.Errorf("configurator.Constructor: %w", err)
 	}
 
 	return &Foo{
 		config: c,
 	}, nil
+}
+
+// NewBar is a constructor for Bar with underlying configuration storage.
+func NewBar() *Bar {
+	return &Bar{
+		Storage: configurator.NewStorage(new(config)),
+	}
 }
 
 // Example demonstrates building extendable constructors with configurator package.
@@ -79,5 +105,22 @@ func Example() {
 
 	if foo3.config == nil || foo3.config.i != 0 || foo3.config.a != "" {
 		panic(fmt.Sprintf("unexpected result: %+v", foo3.config))
+	}
+
+	// example of a thread-safe configuration.
+	bar := NewBar()
+
+	// a setter is safe to use concurrently.
+	if err = configurator.ToStorage(bar.Storage, WithI(1), WithA("a")); err != nil {
+		panic(err)
+	}
+
+	// same with a getter.
+	if i, err := configurator.FromStorage(bar.Storage, GetI()); err != nil || i != 1 {
+		panic(fmt.Sprintf("unexpected result: %v, %v", i, err))
+	}
+
+	if a, err := configurator.FromStorage(bar.Storage, GetA()); err != nil || a != "a" {
+		panic(fmt.Sprintf("unexpected result: %v, %v", a, err))
 	}
 }

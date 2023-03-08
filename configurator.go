@@ -10,7 +10,7 @@ type Option[T any] func(t T) error
 func Constructor[T any](config T, opts []Option[T]) error {
 	for i, opt := range opts {
 		if err := opt(config); err != nil {
-			return fmt.Errorf("option #%d failed: %w", i+1, err)
+			return fmt.Errorf("option #%d (%T) failed: %w", i+1, opt, err)
 		}
 	}
 
