@@ -37,9 +37,7 @@ func TestConstructorError(t *testing.T) {
 		}
 	}
 
-	c := new(config)
-
-	err := configurator.Constructor(c, []configurator.Option[*config]{opt("a")})
+	err := configurator.Constructor(new(config), []configurator.Option[*config]{opt("a")})
 	if !errors.Is(err, customErr) {
 		t.Fatalf("%v != %v", err, customErr)
 	}

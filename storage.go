@@ -5,7 +5,7 @@ import (
 	"sync"
 )
 
-// Getter is a typed getter function for Storage.
+// Getter is a getter function to retrieve typed values from Storage.
 type Getter[T, O any] func(config T) (value O, err error)
 
 // Storage is a thread-safe config holder.
@@ -15,14 +15,15 @@ type Storage[T any] struct {
 	config T
 }
 
-// NewStorage returns a Storage for given config.
+// NewStorage returns a thread-safe Storage for given config.
 func NewStorage[T any](config T) *Storage[T] {
 	return &Storage[T]{
 		config: config,
 	}
 }
 
-// ToStorage sets a typed value to given config storage according to specified Getter.
+// ToStorage sets a typed value to given config storage according to specified Getter,
+// this function is thread-safe.
 func ToStorage[T any](storage *Storage[T], setters ...Option[T]) error {
 	if err := storage.set(setters...); err != nil {
 		return fmt.Errorf("storage.set: %w", err)
@@ -31,7 +32,8 @@ func ToStorage[T any](storage *Storage[T], setters ...Option[T]) error {
 	return nil
 }
 
-// FromStorage returns a typed value from given config storage according to specified Getter.
+// FromStorage returns a typed value from given config storage according to specified Getter,
+// this function is thread-safe.
 func FromStorage[T, O any](storage *Storage[T], getter Getter[T, O]) (value O, err error) {
 	v, err := storage.get(
 		func(config T) (value any, err error) {
@@ -65,7 +67,7 @@ func (m *Storage[T]) set(opts ...Option[T]) error {
 
 	for i, opt := range opts {
 		if err := opt(m.config); err != nil {
-			return fmt.Errorf("option #%d (%T) failed: %w", i+1, opt, err)
+			return fmt.Errorf("option setter #%d (%T) failed: %w", i+1, opt, err)
 		}
 	}
 

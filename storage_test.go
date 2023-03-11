@@ -1,6 +1,7 @@
 package configurator_test
 
 import (
+	"errors"
 	"fmt"
 	"sync"
 	"testing"
@@ -8,7 +9,7 @@ import (
 	"github.com/p-alexander/configurator"
 )
 
-func TestToStorage(t *testing.T) {
+func TestToStorageHappyCase(t *testing.T) {
 	opt1 := func(i int) configurator.Option[*config] {
 		return func(c *config) error {
 			c.i = i
@@ -49,7 +50,22 @@ func TestToStorage(t *testing.T) {
 	}
 }
 
-func TestFromStorage(t *testing.T) {
+func TestToStorageError(t *testing.T) {
+	customErr := errors.New("test")
+
+	opt := func(a string) configurator.Option[*config] {
+		return func(c *config) error {
+			return customErr
+		}
+	}
+
+	err := configurator.ToStorage(configurator.NewStorage(new(config)), opt("a"))
+	if !errors.Is(err, customErr) {
+		t.Fatalf("%v != %v", err, customErr)
+	}
+}
+
+func TestFromStorageHappyCase(t *testing.T) {
 	getter1 := func(c *config) (option any, err error) {
 		return c.i, nil
 	}
@@ -80,6 +96,19 @@ func TestFromStorage(t *testing.T) {
 	}
 
 	wg.Wait()
+}
+
+func TestFromStorageError(t *testing.T) {
+	customErr := errors.New("test")
+
+	getter := func(config *config) (value int, err error) {
+		return 0, customErr
+	}
+
+	_, err := configurator.FromStorage(configurator.NewStorage(new(config)), getter)
+	if !errors.Is(err, customErr) {
+		t.Fatalf("%v != %v", err, customErr)
+	}
 }
 
 func ExampleFromStorage() {
