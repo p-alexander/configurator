@@ -1,10 +1,10 @@
 # configurator [![GoDoc](https://img.shields.io/badge/godoc-Reference-brightgreen.svg?style=flat)](https://godoc.org/github.com/p-alexander/configurator)
 
-Package `configurator` contains helpers for creating constructors with variadic options.
+Package `configurator` contains helpers for creating configurations using variadic options.
 
 ## About
 
-A commonly used pattern for constructors in Go makes use of variadics to provide extendable configuration.
+A commonly used pattern for constructors in Go is to use varadics to write extendable configurations.
 
 For example:
 ```
@@ -27,7 +27,7 @@ if err != nil {
 }
 ```
 
-This package provides simple utilities to help build such constructors without too much code duplication.
+This package provides simple utilities to help build such constructors.
 
 ## Usage
 

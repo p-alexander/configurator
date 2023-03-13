@@ -68,11 +68,17 @@ func NewFoo(opts ...configurator.Option[*config]) (*Foo, error) {
 	}, nil
 }
 
-// NewBar is a constructor for Bar with underlying configuration storage.
-func NewBar() *Bar {
-	return &Bar{
-		Storage: configurator.NewStorage(new(config)),
+// NewBar is a variadic constructor for Bar with underlying configuration storage.
+func NewBar(opts ...configurator.Option[*config]) (*Bar, error) {
+	storage := configurator.NewStorage(new(config))
+
+	if err := configurator.ToStorage(storage, opts...); err != nil {
+		return nil, fmt.Errorf("configurator.ToStorage: %w", err)
 	}
+
+	return &Bar{
+		Storage: storage,
+	}, nil
 }
 
 // Example demonstrates building extendable constructors with configurator package.
@@ -83,9 +89,7 @@ func Example() {
 		panic(err)
 	}
 
-	if foo1.config == nil || foo1.config.i != 1 || foo1.config.a != "a" {
-		panic(fmt.Sprintf("unexpected result: %+v", foo1.config))
-	}
+	fmt.Printf("foo1: %d, %s;\n", foo1.config.i, foo1.config.a)
 
 	// example construction of a Foo with only one option specified.
 	foo2, err := NewFoo(WithA("a"))
@@ -93,9 +97,7 @@ func Example() {
 		panic(err)
 	}
 
-	if foo2.config == nil || foo2.config.i != 0 || foo2.config.a != "a" {
-		panic(fmt.Sprintf("unexpected result: %+v", foo2.config))
-	}
+	fmt.Printf("foo2: %d, %s;\n", foo2.config.i, foo2.config.a)
 
 	// example construction of a Foo without options.
 	foo3, err := NewFoo()
@@ -103,24 +105,34 @@ func Example() {
 		panic(err)
 	}
 
-	if foo3.config == nil || foo3.config.i != 0 || foo3.config.a != "" {
-		panic(fmt.Sprintf("unexpected result: %+v", foo3.config))
-	}
+	fmt.Printf("foo3: %d, %s;\n", foo3.config.i, foo3.config.a)
 
 	// example of a thread-safe configuration.
-	bar := NewBar()
+	bar1, err := NewBar(WithI(1))
+	if err != nil {
+		panic(err)
+	}
 
 	// a setter is safe to use concurrently.
-	if err = configurator.ToStorage(bar.Storage, WithI(1), WithA("a")); err != nil {
+	if err = configurator.ToStorage(bar1.Storage, WithA("a")); err != nil {
 		panic(err)
 	}
 
 	// same with a getter.
-	if i, err := configurator.FromStorage(bar.Storage, GetI()); err != nil || i != 1 {
-		panic(fmt.Sprintf("unexpected result: %v, %v", i, err))
+	i, err := configurator.FromStorage(bar1.Storage, GetI())
+	if err != nil {
+		panic(err)
 	}
 
-	if a, err := configurator.FromStorage(bar.Storage, GetA()); err != nil || a != "a" {
-		panic(fmt.Sprintf("unexpected result: %v, %v", a, err))
+	a, err := configurator.FromStorage(bar1.Storage, GetA())
+	if err != nil {
+		panic(err)
 	}
+
+	fmt.Printf("bar1: %d, %s;\n", i, a)
+	// Output:
+	// foo1: 1, a;
+	// foo2: 0, a;
+	// foo3: 0, ;
+	// bar1: 1, a;
 }

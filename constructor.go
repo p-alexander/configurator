@@ -1,10 +1,6 @@
-// Package configurator contains helpers for creating constructors with variadic options. See usage in the example.
 package configurator
 
 import "fmt"
-
-// Option is a generic option for variadic constructors.
-type Option[T any] func(t T) error
 
 // Constructor applies given set of options to a config.
 func Constructor[T any](config T, opts []Option[T]) error {

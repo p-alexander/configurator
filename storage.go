@@ -5,9 +5,6 @@ import (
 	"sync"
 )
 
-// Getter is a getter function to retrieve typed values from Storage.
-type Getter[T, O any] func(config T) (value O, err error)
-
 // Storage is a thread-safe config holder.
 type Storage[T any] struct {
 	mtx sync.RWMutex
