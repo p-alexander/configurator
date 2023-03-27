@@ -7,12 +7,12 @@ Package `configurator` contains helpers for creating configurations using variad
 A commonly used pattern for constructors in Go is to use varadics to write extendable configurations.
 
 For example:
-```
+```go
 func NewFoo(opts ...Option) (*Foo, error) { ... }
 ```
 
 Using this pattern a developer can provide only a few options first:
-```
+```go
 foo, err := NewFoo(WithI(1))
 if err != nil {
     panic(err)
@@ -20,7 +20,7 @@ if err != nil {
 ```
 
 And then add additional options later without breaking a function signature:
-```
+```go
 foo, err := NewFoo(WithI(1), WithA("a"))
 if err != nil {
     panic(err)
@@ -39,7 +39,7 @@ go get -u github.com/p-alexander/configurator
 ```
 
 ### Using a simple variadic constructor:
-```
+```go
 // config is a private config example.
 type config struct {
 	i int
@@ -75,7 +75,7 @@ func NewFoo(opts ...configurator.Option[*config]) (*Foo, error) {
 ```
 
 ### Using a thread-safe configuration storage:
-```
+```go
 // config is a private config example.
 type config struct {
 	a string
